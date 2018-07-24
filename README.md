@@ -10,7 +10,7 @@ You can also use the `npm dat` package at the command line.
 
 ## Roadmap
 
-[ ] Integrate with on-chain market transactions
-[ ] Get the images
-[ ] Train a CNN on the data
+ - [ ] Integrate with on-chain market transactions
+ - [ ] Get the images
+ - [ ] Train a CNN on the data
 
