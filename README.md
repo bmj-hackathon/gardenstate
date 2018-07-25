@@ -9,7 +9,7 @@ A simple python script to scrape the hashbase.io json files, convert to Pandas d
 You can also use the `npm dat` package at the command line. 
 
 ## Roadmap
-
+ - [x] Get the flower json data
  - [ ] Integrate with on-chain market transactions
  - [ ] Get the images
  - [ ] Train a CNN on the data
