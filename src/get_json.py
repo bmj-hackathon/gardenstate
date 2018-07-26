@@ -33,16 +33,16 @@ all_base_links = json.loads(r.text)
 #%% Loop over each individually
 all_data = list()
 for l in all_base_links:
-    print(l)
-    if re.search('^ flower\d+',l['name'])==True:
-        file_url = requests.compat.urljoin(BASE_URL,l['path'])
+    
+    if re.search('^ flower\d+',l['name']):
+        file_url = requests.compat.urljoin(api_paths['BASE_URL'],l['path'])
         r = requests.get(file_url)
         this_data = json.loads(r.text)
         all_data.append(this_data['Flower'])
-        print("Saved", file_url)
+        print("Saved", l)
     else:
         print("Skip",l)
-        
+    #print(l)    
 #%% Save data
 # Create a DF
 df = pd.DataFrame.from_records(all_data).set_index('id')
