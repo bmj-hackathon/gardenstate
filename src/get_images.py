@@ -53,7 +53,7 @@ assert os.path.exists(LOCAL_API_PATH)
 with open(LOCAL_API_PATH) as f:
     api_paths = yaml.load(f)
 
-#%%
+#%% Get all timesteps
 r = requests.get(api_paths['TIMESTAMPS'])
 response_data = json.loads(r.text)
 
@@ -105,7 +105,7 @@ def zip_flowers(path_folder,path_zip_out):
 
     
 #%%
-ts_df = ts_df[0:3]
+#ts_df = ts_df[0:3]
 for i,record in ts_df.iterrows():
     wall_url_name = record['mtime']+'.jpg'
     image_dt = record['datetime']
@@ -130,7 +130,7 @@ for i,record in ts_df.iterrows():
     download_save_image(wall_url,path_this_wall)
 
     # Iterate over flowers
-    for flnum in range(1,4):
+    for flnum in range(1,101):
         flower_fname = "flower{}.jpg".format(flnum)
         url_this_flwr = os.path.join(api_paths['BASE_API_URL'],'flowers',record['mtime'],flower_fname)
         #logging.debug("{} - {} {} bytes".format(flower_fname,r.status_code,len(flwr_image)))
