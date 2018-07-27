@@ -11,7 +11,9 @@ import glob, os
 import yaml
 #import posixpath
 import sys
+
 import zipfile
+import shutil 
 
 
 #%% LOGGING for Spyder! Disable for production. 
@@ -42,7 +44,8 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 LOCAL_PROJECT_PATH = glob.glob(os.path.expanduser('~/git/gardenstate'))[0]
 assert os.path.exists(LOCAL_PROJECT_PATH)
 LOCAL_DATA_PATH = os.path.join(LOCAL_PROJECT_PATH,'IMAGES')
-assert os.path.exists(LOCAL_DATA_PATH)
+assert os.path.exists(LOCAL_DATA_PATH)#%%
+
 LOCAL_API_PATH = os.path.join(LOCAL_PROJECT_PATH,'API_PATH.yml')
 assert os.path.exists(LOCAL_API_PATH)
 
@@ -51,7 +54,6 @@ with open(LOCAL_API_PATH) as f:
     api_paths = yaml.load(f)
 
 #%%
-
 r = requests.get(api_paths['TIMESTAMPS'])
 response_data = json.loads(r.text)
 
@@ -76,13 +78,6 @@ logging.debug("mean timestep: {}".format(mean_timestep))
 logging.debug("Total time elapsed:{}".format(total_time_elapsed))
 
 
-#%% Get wall images
-
-#requests.compat.urljoin(api_paths['BASE_API_URL'],record['mtime']+'.jpg')
-
-#requests.compat.urljoin(api_paths['BASE_API_URL'],'wall/'+record['mtime']+'.jpg')
-
-
 #%% 
 def download_save_image(t_url,out_path):
     # GET the wall image     
@@ -98,6 +93,16 @@ def download_save_image(t_url,out_path):
     
     logging.debug("Downloaded {:7} bytes to {}".format(len(image),out_path))
     
+def zip_flowers(path_folder,path_zip_out):
+    # Collect the flower files
+    all_image_files = glob.glob(os.path.join(path_folder, '*.jpg'))
+    
+    with zipfile.ZipFile(path_zip_out, 'w') as zip_this:        
+        for file in all_image_files:
+            this_fname = os.path.split(file)[-1]
+            zip_this.write(file, arcname = this_fname, compress_type=zipfile.ZIP_DEFLATED)    
+    logging.debug("Zipped {} files into {}".format(len(all_image_files),path_zip_out))
+
     
 #%%
 ts_df = ts_df[0:3]
@@ -112,17 +117,14 @@ for i,record in ts_df.iterrows():
     path_this_wall = os.path.join(path_folder_timestep,image_dt_str+' wall'+'.jpg')
     path_flower_zip = os.path.join(path_folder_timestep+ ' flowers'+'.zip')
     
-    
+    # Skip if we already processed this timestamp
     if os.path.exists(path_flower_zip):
         logging.debug("Skipping {}, already exsists".format(image_dt))
         continue
     
     if not os.path.exists(path_folder_timestep):
         os.mkdir(path_folder_timestep)
-    #elif os.path.exists(path_this_wall) and os.path.exists(path_flower_zip):
-    #    # Skip this if this timestep has already been downloaded!
-    #    logging.debug("SKIP".format())
-    #    continue
+
     
     wall_url = os.path.join(api_paths['BASE_API_URL'],'wall',wall_url_name)
     download_save_image(wall_url,path_this_wall)
@@ -131,35 +133,17 @@ for i,record in ts_df.iterrows():
     for flnum in range(1,4):
         flower_fname = "flower{}.jpg".format(flnum)
         url_this_flwr = os.path.join(api_paths['BASE_API_URL'],'flowers',record['mtime'],flower_fname)
-        #r = requests.get(url_this_flwr)
-        #flwr_image = r.content
         #logging.debug("{} - {} {} bytes".format(flower_fname,r.status_code,len(flwr_image)))
         path_flwr = os.path.join(path_folder_timestep,image_dt_str + " "+ flower_fname)
         
         download_save_image(url_this_flwr,path_flwr)
-        
-#%%
-path_folder = path_folder_timestep
-path_zip_out = path_flower_zip
-def zip_flowers(path_folder,path_zip_out):
-    # Collect the flower files
-    all_image_files = glob.glob(os.path.join(path_folder, '*.jpg'))
     
-    with zipfile.ZipFile(path_zip_out, 'w') as zip_this:        
-        for file in all_image_files:
-            zip_this.write(file, compress_type=zipfile.ZIP_DEFLATED)    
-        
-        
-#        with open(path_flwr, 'wb') as f:
-#            f.write(flwr_image)
-#        logging.debug("Saved flower image {}".format(path_flwr))
-
-        #print(flower_fname)
-
-
-zip_flowers(path_folder_timestep,path_flower_zip)
-#https://flowertokens.app/flowers/1logger.critical(532415250/flower1.jpg
-#https://flowertokens.app/flowers/1532415250/flower100.jpg
+    # Archive this timestamp    
+    zip_flowers(path_folder_timestep,path_flower_zip)
+    
+    # Clean up the directory
+    #os.rmdir(path_folder_timestep) 
+    shutil.rmtree(path_folder_timestep, ignore_errors=False, onerror=None)
 
 #%%
 
